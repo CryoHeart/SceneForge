@@ -107,6 +107,27 @@ npx prisma db seed
 
 6. Confirm the database was created and tables exist.
 
+## Database Dump (Quick Setup)
+
+This repository includes a full SQL dump file at `sceneforge-full.sql`.
+
+- Use it if you want a ready-to-run database with schema + seed/demo data in one import.
+- It is useful for quickly syncing local setup without re-running migrations manually.
+
+Import command example:
+
+```bash
+mysql -u root -p sceneforge < sceneforge-full.sql
+```
+
+If the `sceneforge` database does not exist yet, create it first:
+
+```sql
+CREATE DATABASE IF NOT EXISTS sceneforge
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+```
+
 ## Environment Setup
 
 1. Copy env examples:
