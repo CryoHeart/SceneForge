@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  fan
+  band_admin
+  venue_admin
+  admin
+}
+
+model User {
+  id            Int          @id @default(autoincrement())
+  email         String       @unique
+  passwordHash  String
+  displayName   String
+  role          UserRole     @default(fan)
+  city          String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  managedBands  Band[]       @relation("BandAdmins")
+  managedVenues Venue[]      @relation("VenueAdmins")
+  createdEvents Event[]      @relation("EventCreator")
+  savedEvents   SavedEvent[]
+  posters       Poster[]
+}
+
+model Band {
+  id          Int       @id @default(autoincrement())
+  name        String
+  slug        String    @unique
+  bio         String
+  city        String?
+  genreTags   String
+  linksJson   Json?
+  adminId     Int?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  admin       User?     @relation("BandAdmins", fields: [adminId], references: [id])
+  events      Event[]
+  setlists    Setlist[]
+}
+
+model Venue {
+  id          Int       @id @default(autoincrement())
+  name        String
+  slug        String    @unique
+  description String
+  address     String
+  city        String
+  capacity    Int
+  adminId     Int?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  admin       User?     @relation("VenueAdmins", fields: [adminId], references: [id])
+  events      Event[]
+}
+
+model Event {
+  id            Int          @id @default(autoincrement())
+  title         String
+  slug          String       @unique
+  description   String
+  city          String
+  genre         String
+  startsAt      DateTime
+  price         Decimal      @db.Decimal(10, 2)
+  ticketUrl     String?
+  venueId       Int
+  createdById   Int?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  venue         Venue        @relation(fields: [venueId], references: [id])
+  bands         Band[]
+  poster        Poster?
+  setlists      Setlist[]
+  savedByUsers  SavedEvent[]
+  createdByUser User?        @relation("EventCreator", fields: [createdById], references: [id])
+}
+
+model Poster {
+  id           Int       @id @default(autoincrement())
+  imageUrl     String
+  cloudinaryId String?
+  eventId      Int       @unique
+  uploadedById Int?
+  createdAt    DateTime  @default(now())
+  event        Event     @relation(fields: [eventId], references: [id])
+  uploadedBy   User?     @relation(fields: [uploadedById], references: [id])
+}
+
+model Setlist {
+  id        Int      @id @default(autoincrement())
+  eventId   Int
+  bandId    Int
+  songsJson Json
+  notes     String?
+  createdAt DateTime @default(now())
+  event     Event    @relation(fields: [eventId], references: [id])
+  band      Band     @relation(fields: [bandId], references: [id])
+
+  @@unique([eventId, bandId])
+}
+
+model SavedEvent {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  eventId   Int
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  event     Event    @relation(fields: [eventId], references: [id])
+
+  @@unique([userId, eventId])
+}
