@@ -18,6 +18,7 @@ export function DashboardLayout({ children }: PropsWithChildren) {
             <NavLink
               key={section.to}
               to={section.to}
+              end={section.to === "/dashboard"}
               className={({ isActive }) =>
                 `block rounded-lg px-3 py-2 text-sm ${
                   isActive

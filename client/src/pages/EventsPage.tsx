@@ -5,12 +5,13 @@ import { FilterBar } from "../components/FilterBar";
 import { useEvents } from "../hooks/useEvents";
 import { SectionHeader } from "../components/SectionHeader";
 import type { Event, FilterState } from "../types";
-import { isSameDate, toDateInputValue } from "../utils/dateUtils";
+import { toDateInputValue } from "../utils/dateUtils";
 
 const initialFilters: FilterState = {
   city: "",
   genre: "",
-  date: "",
+  dateFrom: "",
+  dateTo: "",
   venue: "",
   price: "",
 };
@@ -27,7 +28,8 @@ export function EventsPage() {
   const handleFiltersChange = (nextFilters: FilterState) => {
     setFilters({
       ...nextFilters,
-      date: nextFilters.date ? toDateInputValue(nextFilters.date) : "",
+      dateFrom: nextFilters.dateFrom ? toDateInputValue(nextFilters.dateFrom) : "",
+      dateTo: nextFilters.dateTo ? toDateInputValue(nextFilters.dateTo) : "",
     });
   };
 
@@ -38,10 +40,12 @@ export function EventsPage() {
       const venueMatch = filters.venue
         ? (event.venue?.name ?? "").toLowerCase().includes(filters.venue.toLowerCase())
         : true;
-      const priceMatch = filters.price ? Number(event.price) <= Number(filters.price) : true;
-      const dateMatch = filters.date ? isSameDate(event.startsAt, filters.date) : true;
+      const priceMatch = filters.price && filters.price !== "all" ? Number(event.price) <= Number(filters.price) : true;
+      const eventDate = toDateInputValue(event.startsAt);
+      const dateFromMatch = filters.dateFrom ? eventDate >= filters.dateFrom : true;
+      const dateToMatch = filters.dateTo ? eventDate <= filters.dateTo : true;
 
-      return cityMatch && genreMatch && venueMatch && priceMatch && dateMatch;
+      return cityMatch && genreMatch && venueMatch && priceMatch && dateFromMatch && dateToMatch;
     });
   }, [events, filters]);
 

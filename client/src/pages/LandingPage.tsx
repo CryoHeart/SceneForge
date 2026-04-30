@@ -10,6 +10,16 @@ import { getBands, getPosters } from "../services/api";
 import type { Band, Event, Poster } from "../types";
 import { Link } from "react-router-dom";
 
+function pickRandomItems<T>(items: T[], count: number): T[] {
+  const shuffled = [...items];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+
+  return shuffled.slice(0, count);
+}
+
 export function LandingPage() {
   const { events, isLoading: isEventsLoading, hasError: eventsError, refetchEvents } = useEvents();
   const [bands, setBands] = useState<Band[]>([]);
@@ -22,7 +32,7 @@ export function LandingPage() {
     return [...events]
       .filter((event) => new Date(event.startsAt).getTime() >= now)
       .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())
-      .slice(0, 4);
+      .slice(0, 3);
   }, [events]);
 
   const loadLandingData = () => {
@@ -31,7 +41,7 @@ export function LandingPage() {
 
     Promise.all([getBands(), getPosters()])
       .then(([bandData, posterData]) => {
-        setBands(bandData.slice(0, 3));
+        setBands(pickRandomItems(bandData, 3));
         setPosters(posterData.slice(0, 4));
       })
       .catch(() => {

@@ -82,7 +82,8 @@ export type DashboardStats = {
 export type FilterState = {
   city: string;
   genre: string;
-  date: string;
+  dateFrom: string;
+  dateTo: string;
   venue: string;
   price: string;
 };
