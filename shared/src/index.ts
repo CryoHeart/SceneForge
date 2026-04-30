@@ -1,67 +1,62 @@
 export type UserRole = "fan" | "band_admin" | "venue_admin" | "admin";
 
-export type User = {
-  id: number;
+export interface User {
+  id: string;
+  username: string;
   email: string;
-  displayName: string;
   role: UserRole;
-  city?: string | null;
-};
+}
 
-export type Band = {
-  id: number;
+export interface Band {
+  id: string;
   name: string;
-  slug: string;
   bio: string;
-  city?: string | null;
-  genreTags: string;
-  linksJson?: Record<string, string> | null;
-};
-
-export type Venue = {
-  id: number;
-  name: string;
-  slug: string;
-  description: string;
-  address: string;
+  genres: string[];
   city: string;
+  imageUrl?: string;
+  socialLinks: Record<string, string>;
+}
+
+export interface Venue {
+  id: string;
+  name: string;
+  city: string;
+  address: string;
   capacity: number;
-};
-
-export type Poster = {
-  id: number;
-  imageUrl: string;
-  cloudinaryId?: string | null;
-  eventId: number;
-};
-
-export type Setlist = {
-  id: number;
-  eventId: number;
-  bandId: number;
-  songsJson: string[];
-  notes?: string | null;
-};
-
-export type Event = {
-  id: number;
-  title: string;
-  slug: string;
   description: string;
+}
+
+export interface Poster {
+  id: string;
+  imageUrl: string;
+  eventId?: string;
+  caption?: string;
+}
+
+export interface Setlist {
+  id: string;
+  eventId: string;
+  bandId: string;
+  songs: string[];
+}
+
+export interface Event {
+  id: string;
+  title: string;
   city: string;
   genre: string;
-  startsAt: string;
+  date: string;
+  time: string;
   price: number;
-  ticketUrl?: string | null;
-  venueId: number;
-  venue?: Venue;
-  bands?: Band[];
-  poster?: Poster | null;
-};
+  ticketUrl?: string;
+  posterUrl?: string;
+  venueId: string;
+  bandIds: string[];
+}
 
-export type SavedEvent = {
-  id: number;
-  userId: number;
-  eventId: number;
-  event?: Event;
-};
+export interface SavedEvent {
+  id: string;
+  userId: string;
+  eventId: string;
+  createdAt: string;
+}

@@ -1,118 +1,100 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { EmptyState, ErrorState, LoadingState } from "../components/AppStates";
+import { useParams } from "react-router-dom";
+import { AppState } from "../components/AppState";
 import { Badge } from "../components/Badge";
 import { Button } from "../components/Button";
-import { SurfaceCard } from "../components/SurfaceCard";
-import { getEventById } from "../services/api";
+import { SectionHeader } from "../components/SectionHeader";
+import { demoBands, demoVenues } from "../services/demoData";
+import { sceneService } from "../services/sceneService";
 import type { Event } from "../types";
-import { formatEventDate } from "../utils/dateUtils";
-import { formatILS } from "../utils/formatCurrency";
+import { formatDateTime, formatPrice } from "../utils/format";
 
 export function EventDetailsPage() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [event, setEvent] = useState<Event | null>(null);
-  const [saved, setSaved] = useState(false);
+  const { id = "" } = useParams();
+  const [event, setEvent] = useState<Event | undefined>();
+  const [status, setStatus] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-
-  const loadEvent = () => {
-    if (!id) {
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    setHasError(false);
-    getEventById(Number(id))
-      .then(setEvent)
-      .catch(() => setHasError(true))
-      .finally(() => setIsLoading(false));
-  };
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadEvent();
+    const load = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const next = await sceneService.getEventById(id);
+        setEvent(next);
+      } catch {
+        setError("Could not load event details.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void load();
   }, [id]);
 
-  const bandsText = useMemo(() => {
-    if (!event?.bands?.length) {
-      return "Lineup TBA";
-    }
-
-    return event.bands.map((band) => band.name).join(" • ");
-  }, [event]);
-  const fallbackPoster = "https://images.unsplash.com/photo-1483412033650-1015ddeb83d1";
+  const bands = useMemo(() => demoBands.filter((band) => event?.bandIds.includes(band.id)), [event]);
+  const venue = useMemo(() => demoVenues.find((item) => item.id === event?.venueId), [event]);
 
   if (isLoading) {
-    return <LoadingState title="Loading event details..." />;
+    return <AppState title="Loading event" message="Pulling show details from the scene feed..." />;
   }
 
-  if (hasError) {
-    return (
-      <ErrorState
-        title="Could not load event"
-        description="There was a problem loading this event profile."
-        actionLabel="Retry"
-        onAction={loadEvent}
-      />
-    );
+  if (error) {
+    return <AppState title="Event unavailable" message={error} tone="error" />;
   }
 
   if (!event) {
-    return <EmptyState title="Event not found" description="This event may have been removed or is unavailable." />;
+    return <AppState title="Event not found" message="This event may have been removed or has not been published yet." />;
   }
 
+  const handleSave = async () => {
+    const token = localStorage.getItem("sceneforge_token") ?? undefined;
+    const saved = await sceneService.saveEvent(event.id, token);
+    setStatus(saved ? "Saved to your account." : "Login required to save events.");
+  };
+
   return (
-    <div className="flex flex-col gap-6">
-      <button
-        onClick={() => navigate(-1)}
-        className="flex w-fit items-center gap-2 text-sm text-white/60 hover:text-white transition-colors"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-        </svg>
-        Back to Events
-      </button>
-      <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-        <img
-          src={event.poster?.imageUrl ?? fallbackPoster}
-          alt={event.title}
-          className="max-h-[80vh] w-full rounded-2xl object-contain"
-          onError={(e) => {
-            if (e.currentTarget.src !== fallbackPoster) {
-              e.currentTarget.src = fallbackPoster;
-            }
-          }}
-        />
-      <SurfaceCard className="space-y-4 p-5 sm:p-6">
-        <h1 className="font-display text-4xl text-white">{event.title}</h1>
-        <div className="flex flex-wrap gap-2">
+    <div className="space-y-6">
+      <SectionHeader eyebrow="Show Details" title={event.title} subtitle="Full lineup, venue context, and ticket access." />
+      <img
+        src={event.posterUrl ?? "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f"}
+        alt={event.title}
+        className="h-72 w-full rounded-2xl border border-zinc-800 object-cover"
+      />
+      <div className="rounded-2xl border border-zinc-800 bg-panel p-6">
+        <div className="mt-3 flex flex-wrap gap-2">
           <Badge>{event.genre}</Badge>
           <Badge>{event.city}</Badge>
-          <Badge>{formatILS(event.price)}</Badge>
         </div>
-        <p className="text-white/70">{event.description}</p>
-        <p className="text-sm text-white/70">Bands: {bandsText}</p>
-        <p className="text-sm text-white/70">Venue: {event.venue?.name ?? "Venue TBA"}</p>
-        <p className="text-sm text-white/70">Date: {formatEventDate(event.startsAt)}</p>
-        <div className="flex flex-wrap gap-3">
-          {event.ticketUrl && (
-            <a
-              href={event.ticketUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-xl bg-gradient-to-r from-rose-600 to-rose-500 px-4 py-2 text-sm font-semibold text-white hover:from-rose-500 hover:to-rose-400"
-            >
-              Get Tickets
-            </a>
-          )}
-          <Button variant={saved ? "secondary" : "ghost"} onClick={() => setSaved((prev) => !prev)}>
-            {saved ? "Saved" : "Save Event"}
-          </Button>
+        <p className="mt-4 text-zinc-300">{event.description}</p>
+        <p className="mt-3 text-zinc-400">{formatDateTime(event.date)}</p>
+        <p className="text-zinc-400">{formatPrice(event.price)}</p>
+        {event.ticketUrl ? (
+          <a href={event.ticketUrl} className="mt-4 inline-block text-sm font-semibold text-accent hover:text-red-300" target="_blank" rel="noreferrer">
+            Ticket link
+          </a>
+        ) : null}
+        <div className="mt-4">
+          <Button onClick={handleSave}>Save event</Button>
+          {status ? <p className="mt-2 text-sm text-zinc-400">{status}</p> : null}
         </div>
-      </SurfaceCard>
       </div>
+
+      <section className="rounded-2xl border border-zinc-800 bg-panel p-6">
+        <h2 className="text-xl font-bold">Bands Playing</h2>
+        <ul className="mt-3 space-y-2 text-zinc-300">
+          {bands.map((band) => (
+            <li key={band.id}>{band.name}</li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="rounded-2xl border border-zinc-800 bg-panel p-6">
+        <h2 className="text-xl font-bold">Venue Info</h2>
+        <p className="mt-2 text-zinc-300">{venue?.name ?? "Unknown venue"}</p>
+        <p className="text-zinc-400">{venue?.address}</p>
+      </section>
     </div>
   );
 }

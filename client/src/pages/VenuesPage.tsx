@@ -1,81 +1,69 @@
 import { useEffect, useMemo, useState } from "react";
-import { EmptyState, ErrorState, LoadingState } from "../components/AppStates";
+import { AppState, LoadingGrid } from "../components/AppState";
+import { FormInput } from "../components/FormInput";
 import { SectionHeader } from "../components/SectionHeader";
-import { SurfaceCard } from "../components/SurfaceCard";
 import { VenueCard } from "../components/VenueCard";
-import { getVenues } from "../services/api";
+import { sceneService } from "../services/sceneService";
 import type { Venue } from "../types";
 
 export function VenuesPage() {
   const [venues, setVenues] = useState<Venue[]>([]);
-  const [query, setQuery] = useState("");
+  const [search, setSearch] = useState("");
   const [city, setCity] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-
-  const loadVenues = () => {
-    setIsLoading(true);
-    setHasError(false);
-    getVenues()
-      .then(setVenues)
-      .catch(() => setHasError(true))
-      .finally(() => setIsLoading(false));
-  };
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadVenues();
+    const load = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const next = await sceneService.getVenues();
+        setVenues(next);
+      } catch {
+        setError("Could not load venues right now.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void load();
   }, []);
 
-  const filtered = useMemo(
-    () =>
-      venues.filter((venue) => {
-        const queryMatch = query ? venue.name.toLowerCase().includes(query.toLowerCase()) : true;
-        const cityMatch = city ? venue.city.toLowerCase().includes(city.toLowerCase()) : true;
-        return queryMatch && cityMatch;
-      }),
-    [venues, query, city]
-  );
+  const filtered = useMemo(() => {
+    return venues.filter((venue) => {
+      const searchOk = !search || venue.name.toLowerCase().includes(search.toLowerCase());
+      const cityOk = !city || venue.city.toLowerCase().includes(city.toLowerCase());
+      return searchOk && cityOk;
+    });
+  }, [venues, search, city]);
 
   return (
     <div className="space-y-6">
-      <SectionHeader title="Venues" subtitle="Find underground spaces by city and discover their upcoming nights." />
-      <SurfaceCard className="grid gap-3 p-4 md:grid-cols-2">
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search venues"
-          className="rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-white transition placeholder:text-white/40 focus:border-rose-300/55"
-        />
-        <input
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-          placeholder="Filter by city"
-          className="rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-white transition placeholder:text-white/40 focus:border-rose-300/55"
-        />
-      </SurfaceCard>
+      <SectionHeader
+        eyebrow="Spaces"
+        title="Venues"
+        subtitle="Find underground rooms by city, capacity, and scene fit."
+      />
+      <div className="grid gap-3 rounded-2xl border border-zinc-800 bg-panel/90 p-4 md:grid-cols-2">
+        <FormInput label="Search venue" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <FormInput label="Filter by city" value={city} onChange={(e) => setCity(e.target.value)} />
+      </div>
 
-      {isLoading && <LoadingState title="Loading venues..." />}
+      {error ? <AppState title="Venues unavailable" message={error} tone="error" /> : null}
+      {isLoading ? <LoadingGrid /> : null}
 
-      {hasError && (
-        <ErrorState
-          title="Could not load venues"
-          description="Something went wrong while fetching venue data."
-          actionLabel="Retry"
-          onAction={loadVenues}
-        />
-      )}
+      {!isLoading && !error && filtered.length === 0 ? (
+        <AppState title="No matching venues" message="Adjust your city or search term to broaden results." />
+      ) : null}
 
-      {!isLoading && !hasError && filtered.length === 0 && (
-        <EmptyState title="No venues found" description="Try another city or search term." />
-      )}
-
-      {!isLoading && !hasError && filtered.length > 0 && (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {!isLoading && !error && filtered.length > 0 ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((venue) => (
             <VenueCard key={venue.id} venue={venue} />
           ))}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

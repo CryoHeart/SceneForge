@@ -1,27 +1,31 @@
-@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
+  font-family: "Space Grotesk", "Segoe UI", sans-serif;
   color-scheme: dark;
-  --scene-bg: #070709;
-  --scene-surface: #131319;
-  --scene-text: #f4f4f5;
-  --site-bg-image: url("/site-background.png");
 }
 
 * {
   box-sizing: border-box;
 }
 
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
 body {
   margin: 0;
-  min-height: 100vh;
-  background: #040507;
-  color: var(--scene-text);
-  font-feature-settings: "ss01" on, "cv11" on;
+  background: #09090b;
+  color: #f4f4f5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 a {
@@ -29,39 +33,7 @@ a {
   text-decoration: none;
 }
 
-#root {
-  min-height: 100vh;
+::selection {
+  background: rgba(239, 68, 68, 0.35);
+  color: #fff;
 }
-
-.site-shell {
-  position: relative;
-  isolation: isolate;
-}
-
-.site-shell::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  pointer-events: none;
-  background-image:
-    linear-gradient(180deg, rgba(4, 8, 12, 0.22) 0%, rgba(4, 8, 12, 0.34) 45%, rgba(3, 4, 7, 0.54) 100%),
-    var(--site-bg-image);
-  background-size: cover, cover;
-  background-repeat: no-repeat, no-repeat;
-  background-position: center, center;
-  transform: scale(1);
-}
-
-.site-shell::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 78% 70%, rgba(210, 16, 54, 0.15), transparent 44%),
-    radial-gradient(circle at 8% 18%, rgba(115, 169, 201, 0.09), transparent 35%),
-    linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.34));
-}
-

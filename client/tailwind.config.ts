@@ -5,25 +5,21 @@ export default {
   theme: {
     extend: {
       colors: {
-        scene: {
-          950: "#070707",
-          900: "#111114",
-          800: "#1a1a1f",
-          700: "#25252d",
-          accent: "#e11d48",
-          glow: "#a21caf",
-          steel: "#94a3b8"
-        }
-      },
-      fontFamily: {
-        display: ["Bebas Neue", "sans-serif"],
-        body: ["Space Grotesk", "sans-serif"]
+        bg: "#09090b",
+        panel: "#121218",
+        panelSoft: "#171722",
+        accent: "#ef4444",
+        accentAlt: "#a855f7",
+        text: "#f4f4f5",
+        muted: "#a1a1aa",
       },
       boxShadow: {
-        panel: "0 0 0 1px rgba(255,255,255,0.08), 0 20px 40px rgba(0,0,0,0.35)",
+        glow: "0 12px 40px rgba(239, 68, 68, 0.2)",
+        purpleGlow: "0 16px 45px rgba(168, 85, 247, 0.22)",
       },
       backgroundImage: {
-        noise: "radial-gradient(circle at 10% 20%, rgba(225,29,72,0.15), transparent 30%), radial-gradient(circle at 85% 10%, rgba(162,28,175,0.18), transparent 35%), linear-gradient(135deg, #070707 0%, #111114 45%, #1a1a1f 100%)",
+        "metal-grid":
+          "linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px)",
       },
     },
   },

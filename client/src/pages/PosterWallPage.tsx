@@ -1,54 +1,48 @@
 import { useEffect, useState } from "react";
-import { EmptyState, ErrorState, LoadingState } from "../components/AppStates";
+import { AppState, LoadingGrid } from "../components/AppState";
 import { PosterGrid } from "../components/PosterGrid";
 import { SectionHeader } from "../components/SectionHeader";
-import { getPosters } from "../services/api";
+import { sceneService } from "../services/sceneService";
 import type { Poster } from "../types";
 
 export function PosterWallPage() {
   const [posters, setPosters] = useState<Poster[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-
-  const loadPosters = () => {
-    setIsLoading(true);
-    setHasError(false);
-    getPosters()
-      .then(setPosters)
-      .catch(() => setHasError(true))
-      .finally(() => setIsLoading(false));
-  };
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadPosters();
+    const load = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const next = await sceneService.getPosters();
+        setPosters(next);
+      } catch {
+        setError("Could not load posters right now.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void load();
   }, []);
 
   return (
     <div className="space-y-6">
       <SectionHeader
+        eyebrow="Visual Archive"
         title="Poster Wall"
-        subtitle="A visual feed of underground nights, captured one poster at a time."
+        subtitle="A gallery of underground show art from across your local scene."
       />
 
-      {isLoading && <LoadingState title="Loading posters..." />}
+      {error ? <AppState title="Posters unavailable" message={error} tone="error" /> : null}
+      {isLoading ? <LoadingGrid count={8} /> : null}
 
-      {hasError && (
-        <ErrorState
-          title="Could not load posters"
-          description="We could not fetch the latest poster wall right now."
-          actionLabel="Retry"
-          onAction={loadPosters}
-        />
-      )}
+      {!isLoading && !error && posters.length === 0 ? (
+        <AppState title="No posters yet" message="Poster uploads will appear here once events publish artwork." />
+      ) : null}
 
-      {!isLoading && !hasError && posters.length === 0 && (
-        <EmptyState
-          title="Poster wall is empty"
-          description="Once bands and venues upload posters, they will appear here."
-        />
-      )}
-
-      {!isLoading && !hasError && posters.length > 0 && <PosterGrid posters={posters} />}
+      {!isLoading && !error && posters.length > 0 ? <PosterGrid posters={posters} /> : null}
     </div>
   );
 }

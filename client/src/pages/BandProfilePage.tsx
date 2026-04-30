@@ -1,92 +1,54 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { EmptyState, ErrorState, LoadingState } from "../components/AppStates";
+import { AppState } from "../components/AppState";
 import { Badge } from "../components/Badge";
-import { EventCard } from "../components/EventCard";
 import { SectionHeader } from "../components/SectionHeader";
-import { SurfaceCard } from "../components/SurfaceCard";
-import { getBandById } from "../services/api";
+import { demoEvents } from "../services/demoData";
+import { sceneService } from "../services/sceneService";
 import type { Band } from "../types";
-import { splitTags } from "../utils/format";
 
 export function BandProfilePage() {
-  const { id } = useParams();
-  const [band, setBand] = useState<Band | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-
-  const loadBand = () => {
-    if (!id) {
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    setHasError(false);
-
-    getBandById(Number(id))
-      .then((bandData) => {
-        setBand(bandData);
-      })
-      .catch(() => setHasError(true))
-      .finally(() => setIsLoading(false));
-  };
+  const { id = "" } = useParams();
+  const [band, setBand] = useState<Band | undefined>();
 
   useEffect(() => {
-    loadBand();
+    void sceneService.getBandById(id).then(setBand);
   }, [id]);
 
-  const upcomingEvents = band?.events ?? [];
-
-  if (isLoading) {
-    return <LoadingState title="Loading band profile..." />;
-  }
-
-  if (hasError) {
-    return (
-      <ErrorState
-        title="Could not load band profile"
-        description="There was a problem loading this band's details."
-        actionLabel="Retry"
-        onAction={loadBand}
-      />
-    );
-  }
+  const upcoming = useMemo(() => demoEvents.filter((event) => event.bandIds.includes(id)), [id]);
 
   if (!band) {
-    return <EmptyState title="Band not found" description="This band profile is unavailable right now." />;
+    return <AppState title="Band not found" message="This artist profile is unavailable right now." />;
   }
 
   return (
     <div className="space-y-6">
-      <SurfaceCard className="p-6">
-        <h1 className="font-display text-5xl text-white">{band.name}</h1>
-        <p className="mt-4 max-w-3xl text-white/70">{band.bio}</p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {splitTags(band.genreTags).map((tag) => (
-            <Badge key={tag}>{tag}</Badge>
+      <SectionHeader eyebrow="Artist Profile" title={band.name} subtitle="Bio, genres, links, and upcoming appearances." />
+      <p className="text-zinc-300">{band.bio}</p>
+      <div className="flex flex-wrap gap-2">
+        {band.genres.map((genre) => (
+          <Badge key={genre}>{genre}</Badge>
+        ))}
+      </div>
+      <section className="rounded-2xl border border-zinc-800 bg-panel p-5">
+        <h2 className="text-xl font-bold">Social / Music Links</h2>
+        <ul className="mt-3 space-y-2 text-sm text-zinc-300">
+          {Object.entries(band.socialLinks).map(([name, url]) => (
+            <li key={name}>
+              <a href={url} target="_blank" rel="noreferrer" className="text-accent hover:text-red-300">
+                {name}
+              </a>
+            </li>
           ))}
-        </div>
-        <div className="mt-4 text-sm text-white/70">
-          {Object.entries(band.linksJson ?? {}).map(([key, value]) => (
-            <a key={key} href={value} target="_blank" rel="noreferrer" className="mr-4 capitalize text-rose-100/90 hover:text-rose-50">
-              {key}
-            </a>
+        </ul>
+      </section>
+      <section className="rounded-2xl border border-zinc-800 bg-panel p-5">
+        <h2 className="text-xl font-bold">Upcoming Events</h2>
+        <ul className="mt-3 space-y-2 text-zinc-300">
+          {upcoming.map((event) => (
+            <li key={event.id}>{event.title}</li>
           ))}
-        </div>
-      </SurfaceCard>
-
-      <section className="space-y-4">
-        <SectionHeader title="Upcoming Events" />
-        {upcomingEvents.length === 0 ? (
-          <EmptyState title="No upcoming events" description="This band has no published events yet." />
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2">
-            {upcomingEvents.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
-        )}
+        </ul>
       </section>
     </div>
   );

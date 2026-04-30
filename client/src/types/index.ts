@@ -1,88 +1,55 @@
 export type UserRole = "fan" | "band_admin" | "venue_admin" | "admin";
 
-export type User = {
-  id: number;
-  email: string;
-  displayName: string;
-  role: UserRole;
-  city?: string | null;
-};
-
-export type Band = {
-  id: number;
+export interface Band {
+  id: string;
   name: string;
-  slug: string;
   bio: string;
-  city?: string | null;
-  genreTags: string;
-  linksJson?: Record<string, string> | null;
-  events?: Event[];
-};
+  genres: string[];
+  city: string;
+  imageUrl?: string;
+  socialLinks: Record<string, string>;
+}
 
-export type Venue = {
-  id: number;
+export interface Venue {
+  id: string;
   name: string;
-  slug: string;
-  description: string;
+  city: string;
   address: string;
-  city: string;
   capacity: number;
-  events?: Event[];
-};
-
-export type Poster = {
-  id: number;
-  imageUrl: string;
-  cloudinaryId?: string | null;
-  eventId: number;
-};
-
-export type Event = {
-  id: number;
-  title: string;
-  slug: string;
   description: string;
+}
+
+export interface Event {
+  id: string;
+  title: string;
   city: string;
   genre: string;
-  startsAt: string;
-  price: number | string;
-  ticketUrl?: string | null;
-  venueId: number;
-  createdById: number;
-  createdAt: string;
-  updatedAt: string;
-  venue?: Venue;
-  bands?: Band[];
-  poster?: Poster | null;
-};
-
-export type PaginatedResponse<T> = {
-  data: T[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-};
-
-export type SavedEvent = {
-  id: number;
-  userId: number;
-  eventId: number;
-  event?: Event;
-};
-
-export type DashboardStats = {
-  totalEvents: number;
-  upcomingEvents: number;
-  savedByFans: number;
-};
-
-export type FilterState = {
-  city: string;
-  genre: string;
+  description: string;
   date: string;
-  venue: string;
-  price: string;
-};
+  price: number;
+  ticketUrl?: string;
+  posterUrl?: string;
+  venueId: string;
+  bandIds: string[];
+}
+
+export interface Poster {
+  id: string;
+  imageUrl: string;
+  caption?: string;
+  eventId?: string;
+}
+
+export interface SavedEvent {
+  id: string;
+  userId: string;
+  eventId: string;
+  createdAt: string;
+}
+
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  role: UserRole;
+}

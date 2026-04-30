@@ -1,5 +1,5 @@
-import bcrypt from "bcrypt";
-import { PrismaClient, UserRole } from "@prisma/client";
+import bcrypt from "bcryptjs";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -7,128 +7,102 @@ async function main() {
   await prisma.savedEvent.deleteMany();
   await prisma.setlist.deleteMany();
   await prisma.poster.deleteMany();
+  await prisma.eventBand.deleteMany();
   await prisma.event.deleteMany();
+  await prisma.user.deleteMany();
   await prisma.band.deleteMany();
   await prisma.venue.deleteMany();
-  await prisma.user.deleteMany();
 
-  const adminPass = await bcrypt.hash("password123", 10);
-  const fanPass = await bcrypt.hash("fanpass123", 10);
-
-  const [adminUser, fanUser] = await Promise.all([
-    prisma.user.create({
-      data: {
-        email: "admin@sceneforge.dev",
-        passwordHash: adminPass,
-        displayName: "Scene Admin",
-        role: UserRole.admin,
-        city: "Istanbul",
-      },
-    }),
-    prisma.user.create({
-      data: {
-        email: "fan@sceneforge.dev",
-        passwordHash: fanPass,
-        displayName: "Riff Hunter",
-        role: UserRole.fan,
-        city: "Istanbul",
-      },
-    }),
-  ]);
-
-  const [bandOne, bandTwo, bandThree] = await Promise.all([
+  const [voidrite, steelThrone, neonRuin] = await Promise.all([
     prisma.band.create({
       data: {
-        name: "Iron Veil",
-        slug: "iron-veil",
-        bio: "Progressive doom with razor-sharp harmonies.",
-        city: "Istanbul",
-        genreTags: "doom,progressive,metal",
-        linksJson: {
-          instagram: "https://instagram.com/ironveil",
-          spotify: "https://spotify.com/ironveil",
+        name: "Voidrite",
+        bio: "Atmospheric doom with post-metal textures.",
+        genres: ["doom", "post-metal"],
+        city: "Seattle",
+        imageUrl: "https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee",
+        socialLinks: {
+          instagram: "https://instagram.com/voidrite",
+          bandcamp: "https://voidrite.bandcamp.com",
         },
       },
     }),
     prisma.band.create({
       data: {
-        name: "Neon Requiem",
-        slug: "neon-requiem",
-        bio: "Post-metal textures and cinematic breakdowns.",
-        city: "Ankara",
-        genreTags: "post-metal,alternative,rock",
-        linksJson: {
-          bandcamp: "https://neonrequiem.bandcamp.com",
+        name: "Steel Throne",
+        bio: "Classic heavy riffs with modern groove energy.",
+        genres: ["heavy metal", "groove"],
+        city: "Portland",
+        imageUrl: "https://images.unsplash.com/photo-1511379938547-c1f69419868d",
+        socialLinks: {
+          spotify: "https://open.spotify.com",
+          youtube: "https://youtube.com",
         },
       },
     }),
     prisma.band.create({
       data: {
-        name: "Black Harbor",
-        slug: "black-harbor",
-        bio: "Groove-heavy modern metal from the coast.",
-        city: "Izmir",
-        genreTags: "groove,metalcore,metal",
+        name: "Neon Ruin",
+        bio: "Dark synth-rock crossing into blackened punk edges.",
+        genres: ["synth-rock", "blackened punk"],
+        city: "Seattle",
+        imageUrl: "https://images.unsplash.com/photo-1501386761578-eac5c94b800a",
+        socialLinks: {
+          website: "https://neonruin.example.com",
+        },
       },
     }),
   ]);
 
-  const [venueOne, venueTwo] = await Promise.all([
+  const [cryptHall, ironCellar] = await Promise.all([
     prisma.venue.create({
       data: {
-        name: "Forge Room",
-        slug: "forge-room",
-        description: "Underground basement with premium sound.",
-        address: "Kadikoy District 41",
-        city: "Istanbul",
-        capacity: 280,
-      },
-    }),
-    prisma.venue.create({
-      data: {
-        name: "Crimson Stage",
-        slug: "crimson-stage",
-        description: "Industrial warehouse venue for heavy nights.",
-        address: "Cankaya District 12",
-        city: "Ankara",
+        name: "Crypt Hall",
+        city: "Seattle",
+        address: "119 Pike St",
         capacity: 420,
+        description: "Charcoal interior room with premium sound and compact pit.",
+      },
+    }),
+    prisma.venue.create({
+      data: {
+        name: "Iron Cellar",
+        city: "Portland",
+        address: "88 Burnside Ave",
+        capacity: 280,
+        description: "Basement venue known for raw underground showcases.",
       },
     }),
   ]);
 
-  const eventOne = await prisma.event.create({
+  const eventA = await prisma.event.create({
     data: {
-      title: "Steel Ritual Night",
-      slug: "steel-ritual-night",
-      description: "Three-band showcase featuring rising local legends.",
-      city: "Istanbul",
-      genre: "Metal",
-      startsAt: new Date("2026-06-12T19:30:00.000Z"),
-      price: 18.5,
-      ticketUrl: "https://tickets.sceneforge.dev/steel-ritual-night",
-      venueId: venueOne.id,
-      createdById: adminUser.id,
+      title: "Black Steel Friday",
+      city: "Seattle",
+      genre: "metal",
+      description: "Triple-headliner featuring doom, groove, and synth-rock crossover.",
+      date: new Date("2026-06-12T20:00:00.000Z"),
+      price: 28,
+      ticketUrl: "https://tickets.example.com/black-steel-friday",
+      venueId: cryptHall.id,
       bands: {
-        connect: [{ id: bandOne.id }, { id: bandThree.id }],
+        create: [{ bandId: voidrite.id, slotTime: "20:30" }, { bandId: steelThrone.id, slotTime: "22:00" }],
       },
     },
-    include: { bands: true },
   });
 
-  const eventTwo = await prisma.event.create({
+  const eventB = await prisma.event.create({
     data: {
-      title: "Midnight Feedback",
-      slug: "midnight-feedback",
-      description: "Late-night post-metal and alt-rock fusion event.",
-      city: "Ankara",
-      genre: "Post-Metal",
-      startsAt: new Date("2026-06-22T20:00:00.000Z"),
-      price: 14,
-      ticketUrl: "https://tickets.sceneforge.dev/midnight-feedback",
-      venueId: venueTwo.id,
-      createdById: adminUser.id,
+      title: "Ruin Circuit",
+      city: "Portland",
+      genre: "rock",
+      description: "Late-night industrial rock and underground metal set.",
+      date: new Date("2026-06-21T21:00:00.000Z"),
+      price: 20,
+      ticketUrl: "https://tickets.example.com/ruin-circuit",
+      venueId: ironCellar.id,
       bands: {
-        connect: [{ id: bandTwo.id }],
+        create: [{ bandId: neonRuin.id, slotTime: "21:30" }, { bandId: steelThrone.id, slotTime: "23:00" }],
       },
     },
   });
@@ -136,16 +110,14 @@ async function main() {
   await prisma.poster.createMany({
     data: [
       {
-        imageUrl: "https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee",
-        cloudinaryId: "mock/steel-ritual-night",
-        eventId: eventOne.id,
-        uploadedById: adminUser.id,
+        imageUrl: "https://images.unsplash.com/photo-1459749411175-04bf5292ceea",
+        caption: "Black Steel Friday",
+        eventId: eventA.id,
       },
       {
-        imageUrl: "https://images.unsplash.com/photo-1487180144351-b8472da7d491",
-        cloudinaryId: "mock/midnight-feedback",
-        eventId: eventTwo.id,
-        uploadedById: adminUser.id,
+        imageUrl: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f",
+        caption: "Ruin Circuit",
+        eventId: eventB.id,
       },
     ],
   });
@@ -153,38 +125,73 @@ async function main() {
   await prisma.setlist.createMany({
     data: [
       {
-        eventId: eventOne.id,
-        bandId: bandOne.id,
-        songsJson: ["Ash Crown", "Veins of Iron", "Terminal Hymn"],
+        eventId: eventA.id,
+        bandId: voidrite.id,
+        songs: ["Grave Echo", "Ashen Crown", "Nightglass"],
       },
       {
-        eventId: eventOne.id,
-        bandId: bandThree.id,
-        songsJson: ["Riot Tide", "Loose Teeth", "Harborfall"],
+        eventId: eventA.id,
+        bandId: steelThrone.id,
+        songs: ["Iron Vein", "Fuelline", "Colossus"],
       },
       {
-        eventId: eventTwo.id,
-        bandId: bandTwo.id,
-        songsJson: ["Mirrors", "Burning Neon", "Oath in Static"],
+        eventId: eventB.id,
+        bandId: neonRuin.id,
+        songs: ["Mercury Lights", "Dead Satellite", "Signal Collapse"],
+      },
+    ],
+  });
+
+  const password = await bcrypt.hash("password123", 10);
+  const fan = await prisma.user.create({
+    data: {
+      username: "fanuser",
+      email: "fan@sceneforge.dev",
+      password,
+      role: "fan",
+    },
+  });
+
+  await prisma.user.createMany({
+    data: [
+      {
+        username: "bandboss",
+        email: "band@sceneforge.dev",
+        password,
+        role: "band_admin",
+        bandId: steelThrone.id,
+      },
+      {
+        username: "venueboss",
+        email: "venue@sceneforge.dev",
+        password,
+        role: "venue_admin",
+        venueId: cryptHall.id,
+      },
+      {
+        username: "sysadmin",
+        email: "admin@sceneforge.dev",
+        password,
+        role: "admin",
       },
     ],
   });
 
   await prisma.savedEvent.create({
     data: {
-      userId: fanUser.id,
-      eventId: eventOne.id,
+      userId: fan.id,
+      eventId: eventA.id,
     },
   });
-
-  console.log("Seed completed.");
 }
 
 main()
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  })
-  .finally(async () => {
+  .then(async () => {
     await prisma.$disconnect();
+    console.log("Seed complete");
+  })
+  .catch(async (error) => {
+    console.error(error);
+    await prisma.$disconnect();
+    process.exit(1);
   });

@@ -1,4 +1,4 @@
-import { Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { MainLayout } from "./layouts/MainLayout";
 import { BandProfilePage } from "./pages/BandProfilePage";
 import { BandsPage } from "./pages/BandsPage";
@@ -13,18 +13,10 @@ import { RegisterPage } from "./pages/RegisterPage";
 import { VenueProfilePage } from "./pages/VenueProfilePage";
 import { VenuesPage } from "./pages/VenuesPage";
 
-function AppShell() {
+function App() {
   return (
     <MainLayout>
-      <Outlet />
-    </MainLayout>
-  );
-}
-
-export default function App() {
-  return (
-    <Routes>
-      <Route element={<AppShell />}>
+      <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/events" element={<EventsPage />} />
         <Route path="/events/:id" element={<EventDetailsPage />} />
@@ -34,14 +26,13 @@ export default function App() {
         <Route path="/venues/:id" element={<VenueProfilePage />} />
         <Route path="/posters" element={<PosterWallPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/dashboard/events" element={<DashboardPage />} />
-        <Route path="/dashboard/manage" element={<DashboardPage />} />
-        <Route path="/dashboard/upload" element={<DashboardPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/home" element={<Navigate to="/" replace />} />
         <Route path="*" element={<NotFoundPage />} />
-      </Route>
-    </Routes>
+      </Routes>
+    </MainLayout>
   );
 }
+
+export default App;

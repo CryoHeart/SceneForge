@@ -1,115 +1,71 @@
-import { useMemo, useState } from "react";
-import { EmptyState, ErrorState, LoadingState } from "../components/AppStates";
+import { useEffect, useMemo, useState } from "react";
+import { AppState, LoadingGrid } from "../components/AppState";
 import { EventCard } from "../components/EventCard";
-import { FilterBar } from "../components/FilterBar";
-import { useEvents } from "../hooks/useEvents";
+import { type EventFilters, FilterBar } from "../components/FilterBar";
 import { SectionHeader } from "../components/SectionHeader";
-import type { Event, FilterState } from "../types";
-import { isSameDate, toDateInputValue } from "../utils/dateUtils";
+import { sceneService } from "../services/sceneService";
+import type { Event } from "../types";
 
-const initialFilters: FilterState = {
-  city: "",
-  genre: "",
-  date: "",
-  venue: "",
-  price: "",
-};
-
-const monthLabelFormatter = new Intl.DateTimeFormat("en-US", {
-  month: "long",
-  year: "numeric",
-});
+const initialFilters: EventFilters = { city: "", genre: "", date: "", venue: "", price: "" };
 
 export function EventsPage() {
-  const { events, isLoading, hasError, refetchEvents } = useEvents();
-  const [filters, setFilters] = useState<FilterState>(initialFilters);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [filters, setFilters] = useState<EventFilters>(initialFilters);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleFiltersChange = (nextFilters: FilterState) => {
-    setFilters({
-      ...nextFilters,
-      date: nextFilters.date ? toDateInputValue(nextFilters.date) : "",
-    });
-  };
+  useEffect(() => {
+    const load = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const next = await sceneService.getEvents();
+        setEvents(next);
+      } catch {
+        setError("Could not load events right now.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const filteredEvents = useMemo(() => {
+    void load();
+  }, []);
+
+  const filtered = useMemo(() => {
     return events.filter((event) => {
-      const cityMatch = filters.city ? event.city.toLowerCase().includes(filters.city.toLowerCase()) : true;
-      const genreMatch = filters.genre ? event.genre.toLowerCase().includes(filters.genre.toLowerCase()) : true;
-      const venueMatch = filters.venue
-        ? (event.venue?.name ?? "").toLowerCase().includes(filters.venue.toLowerCase())
-        : true;
-      const priceMatch = filters.price ? Number(event.price) <= Number(filters.price) : true;
-      const dateMatch = filters.date ? isSameDate(event.startsAt, filters.date) : true;
-
-      return cityMatch && genreMatch && venueMatch && priceMatch && dateMatch;
+      const cityOk = !filters.city || event.city.toLowerCase().includes(filters.city.toLowerCase());
+      const genreOk = !filters.genre || event.genre.toLowerCase().includes(filters.genre.toLowerCase());
+      const dateOk = !filters.date || event.date.startsWith(filters.date);
+      const venueOk = !filters.venue || event.venueId.toLowerCase().includes(filters.venue.toLowerCase());
+      const priceOk = !filters.price || event.price <= Number(filters.price);
+      return cityOk && genreOk && dateOk && venueOk && priceOk;
     });
   }, [events, filters]);
-
-  const groupedEvents = useMemo(() => {
-    const sortedEvents = [...filteredEvents].sort(
-      (a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
-    );
-
-    const groups: Array<{ key: string; label: string; events: Event[] }> = [];
-
-    sortedEvents.forEach((event) => {
-      const date = new Date(event.startsAt);
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-      const label = monthLabelFormatter.format(date);
-      const existingGroup = groups[groups.length - 1];
-
-      if (!existingGroup || existingGroup.key !== key) {
-        groups.push({ key, label, events: [event] });
-        return;
-      }
-
-      existingGroup.events.push(event);
-    });
-
-    return groups;
-  }, [filteredEvents]);
 
   return (
     <div className="space-y-6">
       <SectionHeader
-        eyebrow="Explore"
+        eyebrow="Discover"
         title="Events"
-        subtitle="Filter by city, genre, date, venue, and price to find your next show."
+        subtitle="Filter underground shows by city, genre, date, venue, and ticket budget."
       />
-      <FilterBar value={filters} onChange={handleFiltersChange} />
+      <FilterBar filters={filters} onChange={setFilters} />
 
-      {isLoading && <LoadingState title="Loading events..." />}
+      {error ? <AppState title="Events unavailable" message={error} tone="error" /> : null}
 
-      {hasError && (
-        <ErrorState
-          title="Could not load events"
-          description="Please check your connection and retry."
-          actionLabel="Retry"
-          onAction={refetchEvents}
-        />
-      )}
+      {isLoading ? <LoadingGrid /> : null}
 
-      {!isLoading && !hasError && filteredEvents.length === 0 && (
-        <EmptyState
-          title="No events match these filters"
-          description="Try relaxing a filter or clearing date and price constraints."
-        />
-      )}
+      {!isLoading && !error && filtered.length === 0 ? (
+        <AppState title="No matching events" message="Try broadening your filters to discover more shows." />
+      ) : null}
 
-      {!isLoading && !hasError && groupedEvents.length > 0 && (
-        <div className="space-y-8">
-          {groupedEvents.map((group) => (
-            <section key={group.key} className="space-y-4">
-              <h3 className="font-display text-2xl text-white sm:text-3xl">{group.label}</h3>
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {group.events.map((event) => (
-                  <EventCard key={event.id} event={event} />
-                ))}
-              </div>
-            </section>
+      {!isLoading && !error && filtered.length > 0 ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((event) => (
+            <EventCard key={event.id} event={event} />
           ))}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

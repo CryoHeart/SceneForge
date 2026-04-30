@@ -1,38 +1,34 @@
 import cors from "cors";
 import express from "express";
-import path from "path";
-import { authRouter } from "./routes/auth.routes";
-import { bandsRouter } from "./routes/bands.routes";
-import { dashboardRouter } from "./routes/dashboard.routes";
-import { eventsRouter } from "./routes/events.routes";
-import { postersRouter } from "./routes/posters.routes";
-import { savedEventsRouter } from "./routes/savedEvents.routes";
-import { venuesRouter } from "./routes/venues.routes";
-import { errorHandler, notFoundHandler } from "./middleware/error.middleware";
+import helmet from "helmet";
+import morgan from "morgan";
+import authRoutes from "./routes/auth.js";
+import bandRoutes from "./routes/bands.js";
+import dashboardRoutes from "./routes/dashboard.js";
+import eventRoutes from "./routes/events.js";
+import posterRoutes from "./routes/posters.js";
+import savedEventRoutes from "./routes/savedEvents.js";
+import venueRoutes from "./routes/venues.js";
+import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 
-const app = express();
+export const app = express();
 
+app.use(helmet());
 app.use(cors());
 app.use(express.json());
-app.use("/posters", express.static(path.join(process.cwd(), "public/posters")));
+app.use(morgan("dev"));
 
-app.get("/", (_req, res) => {
-  res.send("SceneForge API is running");
+app.get("/health", (_req, res) => {
+  res.json({ ok: true, service: "SceneForge API" });
 });
 
-app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok", message: "SceneForge API is healthy" });
-});
-
-app.use("/api/auth", authRouter);
-app.use("/api/events", eventsRouter);
-app.use("/api/bands", bandsRouter);
-app.use("/api/venues", venuesRouter);
-app.use("/api/posters", postersRouter);
-app.use("/api/dashboard", dashboardRouter);
-app.use("/api/saved-events", savedEventsRouter);
+app.use("/api/auth", authRoutes);
+app.use("/api/events", eventRoutes);
+app.use("/api/bands", bandRoutes);
+app.use("/api/venues", venueRoutes);
+app.use("/api/posters", posterRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/saved-events", savedEventRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
-
-export { app };

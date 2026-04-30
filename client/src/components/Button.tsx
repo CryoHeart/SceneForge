@@ -1,21 +1,21 @@
 import type { ButtonHTMLAttributes, PropsWithChildren } from "react";
-import clsx from "clsx";
 
-type ButtonProps = PropsWithChildren<ButtonHTMLAttributes<HTMLButtonElement>> & {
-  variant?: "primary" | "secondary" | "ghost";
+type Variant = "primary" | "secondary" | "ghost";
+
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: Variant;
+}
+
+const variantClass: Record<Variant, string> = {
+  primary: "bg-gradient-to-r from-accent to-red-500 text-white shadow-glow hover:from-red-500 hover:to-red-400",
+  secondary: "bg-gradient-to-r from-accentAlt to-purple-500 text-white shadow-purpleGlow hover:from-purple-500 hover:to-purple-400",
+  ghost: "border border-zinc-700 bg-transparent text-zinc-200 hover:border-zinc-500 hover:bg-zinc-900",
 };
 
-export function Button({ children, className, variant = "primary", ...props }: ButtonProps) {
+export function Button({ children, variant = "primary", className = "", ...props }: PropsWithChildren<ButtonProps>) {
   return (
     <button
-      className={clsx(
-        "rounded-xl px-4 py-2 text-sm font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/60",
-        variant === "primary" &&
-          "bg-gradient-to-r from-rose-600 to-rose-500 text-white hover:from-rose-500 hover:to-rose-400 shadow-[0_8px_24px_rgba(225,29,72,0.35)]",
-        variant === "secondary" && "bg-scene-700/90 text-white hover:bg-scene-700",
-        variant === "ghost" && "border border-white/15 bg-transparent text-white hover:border-rose-300/35 hover:bg-white/5",
-        className
-      )}
+      className={`rounded-xl px-4 py-2.5 text-sm font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/70 ${variantClass[variant]} ${className}`}
       {...props}
     >
       {children}

@@ -1,37 +1,63 @@
-import type { FormEvent } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../components/Button";
 import { FormInput } from "../components/FormInput";
-import { useAuth } from "../hooks/useAuth";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const auth = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
-  function handleLogin(event: FormEvent<HTMLFormElement>) {
+  const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    auth.login({
-      token: "demo-token",
-      user: {
-        id: 1,
-        email: "fan@sceneforge.dev",
-        displayName: "Riff Hunter",
-        role: "fan",
-      },
-    });
-    navigate("/dashboard");
-  }
+    setError("");
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL ?? "http://localhost:5000"}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as { message?: string } | null;
+        throw new Error(data?.message ?? "Login failed");
+      }
+
+      const data = (await response.json()) as { token: string; user: unknown };
+      localStorage.setItem("sceneforge_token", data.token);
+      localStorage.setItem("sceneforge_user", JSON.stringify(data.user));
+      navigate("/dashboard");
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : "Unable to login");
+    }
+  };
 
   return (
-    <div className="mx-auto w-full max-w-md rounded-2xl border border-white/10 bg-scene-800 p-6 shadow-panel">
-      <h1 className="font-display text-4xl text-white">Login</h1>
-      <form onSubmit={handleLogin} className="mt-5 space-y-4">
-        <FormInput id="login-email" label="Email" type="email" required placeholder="fan@sceneforge.dev" />
-        <FormInput id="login-password" label="Password" type="password" required placeholder="password123" />
-        <Button type="submit" className="w-full">Sign In</Button>
+    <div className="mx-auto max-w-md rounded-2xl border border-zinc-800 bg-panel/95 p-6 shadow-glow md:p-8">
+      <p className="text-xs uppercase tracking-[0.2em] text-accent/80">Welcome back</p>
+      <h1 className="mt-1 text-3xl font-black">Login</h1>
+      <p className="mt-2 text-sm text-zinc-400">Sign in to manage events, venues, and posters.</p>
+      <form className="mt-4 space-y-4" onSubmit={onSubmit}>
+        <FormInput label="Email" value={email} onChange={(e) => setEmail(e.target.value)} type="email" required />
+        <FormInput
+          label="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          type="password"
+          required
+        />
+        {error ? <p className="text-sm text-red-400">{error}</p> : null}
+        <Button className="w-full" type="submit">
+          Sign in
+        </Button>
       </form>
-      <p className="mt-4 text-sm text-white/65">
-        No account? <Link to="/register" className="text-fuchsia-200">Create one</Link>
+      <p className="mt-4 text-sm text-zinc-400">
+        New here?{" "}
+        <Link to="/register" className="font-semibold text-accent transition hover:text-red-300">
+          Create an account
+        </Link>
       </p>
     </div>
   );

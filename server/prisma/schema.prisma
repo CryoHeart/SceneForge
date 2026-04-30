@@ -15,105 +15,103 @@ enum UserRole {
 }
 
 model User {
-  id            Int          @id @default(autoincrement())
-  email         String       @unique
-  passwordHash  String
-  displayName   String
-  role          UserRole     @default(fan)
-  city          String?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  managedBands  Band[]       @relation("BandAdmins")
-  managedVenues Venue[]      @relation("VenueAdmins")
-  createdEvents Event[]      @relation("EventCreator")
-  savedEvents   SavedEvent[]
-  posters       Poster[]
+  id          String       @id @default(cuid())
+  username    String       @unique
+  email       String       @unique
+  password    String
+  role        UserRole     @default(fan)
+  bandId      String?
+  venueId     String?
+  band        Band?        @relation(fields: [bandId], references: [id])
+  venue       Venue?       @relation(fields: [venueId], references: [id])
+  savedEvents SavedEvent[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }
 
 model Band {
-  id          Int       @id @default(autoincrement())
+  id          String       @id @default(cuid())
   name        String
-  slug        String    @unique
-  bio         String
-  city        String?
-  genreTags   String
-  linksJson   Json?
-  adminId     Int?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  admin       User?     @relation("BandAdmins", fields: [adminId], references: [id])
-  events      Event[]
+  bio         String       @db.Text
+  genres      Json
+  city        String
+  imageUrl    String?
+  socialLinks Json
+  users       User[]
+  events      EventBand[]
   setlists    Setlist[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }
 
 model Venue {
-  id          Int       @id @default(autoincrement())
+  id          String      @id @default(cuid())
   name        String
-  slug        String    @unique
-  description String
-  address     String
   city        String
+  address     String
   capacity    Int
-  adminId     Int?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  admin       User?     @relation("VenueAdmins", fields: [adminId], references: [id])
+  description String      @db.Text
+  users       User[]
   events      Event[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 }
 
 model Event {
-  id            Int          @id @default(autoincrement())
-  title         String
-  slug          String       @unique
-  description   String
-  city          String
-  genre         String
-  startsAt      DateTime
-  price         Decimal      @db.Decimal(10, 2)
-  ticketUrl     String?
-  venueId       Int
-  createdById   Int?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  venue         Venue        @relation(fields: [venueId], references: [id])
-  bands         Band[]
-  poster        Poster?
-  setlists      Setlist[]
-  savedByUsers  SavedEvent[]
-  createdByUser User?        @relation("EventCreator", fields: [createdById], references: [id])
+  id          String       @id @default(cuid())
+  title       String
+  city        String
+  genre       String
+  description String       @db.Text
+  date        DateTime
+  price       Decimal      @db.Decimal(8, 2)
+  ticketUrl   String?
+  venueId     String
+  venue       Venue        @relation(fields: [venueId], references: [id])
+  posters     Poster[]
+  bands       EventBand[]
+  setlists    Setlist[]
+  savedBy     SavedEvent[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model EventBand {
+  eventId  String
+  bandId   String
+  slotTime String?
+  event    Event  @relation(fields: [eventId], references: [id])
+  band     Band   @relation(fields: [bandId], references: [id])
+
+  @@id([eventId, bandId])
 }
 
 model Poster {
-  id           Int       @id @default(autoincrement())
-  imageUrl     String
-  cloudinaryId String?
-  eventId      Int       @unique
-  uploadedById Int?
-  createdAt    DateTime  @default(now())
-  event        Event     @relation(fields: [eventId], references: [id])
-  uploadedBy   User?     @relation(fields: [uploadedById], references: [id])
+  id        String   @id @default(cuid())
+  imageUrl  String
+  caption   String?
+  eventId   String?
+  event     Event?   @relation(fields: [eventId], references: [id])
+  createdAt DateTime @default(now())
 }
 
 model Setlist {
-  id        Int      @id @default(autoincrement())
-  eventId   Int
-  bandId    Int
-  songsJson Json
-  notes     String?
-  createdAt DateTime @default(now())
+  id        String   @id @default(cuid())
+  eventId   String
+  bandId    String
+  songs     Json
   event     Event    @relation(fields: [eventId], references: [id])
   band      Band     @relation(fields: [bandId], references: [id])
-
-  @@unique([eventId, bandId])
+  createdAt DateTime @default(now())
 }
 
 model SavedEvent {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  eventId   Int
-  createdAt DateTime @default(now())
+  id        String   @id @default(cuid())
+  userId    String
+  eventId   String
   user      User     @relation(fields: [userId], references: [id])
   event     Event    @relation(fields: [eventId], references: [id])
+  createdAt DateTime @default(now())
 
   @@unique([userId, eventId])
 }

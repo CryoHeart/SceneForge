@@ -1,6 +1,6 @@
-import { app } from "./app";
-import { env } from "./config/env";
+import { app } from "./app.js";
+import { env } from "./config/env.js";
 
-app.listen(env.PORT, () => {
-  console.log(`SceneForge API running on http://localhost:${env.PORT}`);
+app.listen(env.port, () => {
+  console.log(`SceneForge API running on http://localhost:${env.port}`);
 });

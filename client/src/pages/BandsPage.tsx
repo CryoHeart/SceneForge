@@ -1,81 +1,69 @@
 import { useEffect, useMemo, useState } from "react";
-import { EmptyState, ErrorState, LoadingState } from "../components/AppStates";
+import { AppState, LoadingGrid } from "../components/AppState";
 import { BandCard } from "../components/BandCard";
+import { FormInput } from "../components/FormInput";
 import { SectionHeader } from "../components/SectionHeader";
-import { SurfaceCard } from "../components/SurfaceCard";
-import { getBands } from "../services/api";
+import { sceneService } from "../services/sceneService";
 import type { Band } from "../types";
 
 export function BandsPage() {
   const [bands, setBands] = useState<Band[]>([]);
-  const [query, setQuery] = useState("");
+  const [search, setSearch] = useState("");
   const [genre, setGenre] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
-
-  const loadBands = () => {
-    setIsLoading(true);
-    setHasError(false);
-    getBands()
-      .then(setBands)
-      .catch(() => setHasError(true))
-      .finally(() => setIsLoading(false));
-  };
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadBands();
+    const load = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const next = await sceneService.getBands();
+        setBands(next);
+      } catch {
+        setError("Could not load bands right now.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void load();
   }, []);
 
-  const filtered = useMemo(
-    () =>
-      bands.filter((band) => {
-        const queryMatch = query ? band.name.toLowerCase().includes(query.toLowerCase()) : true;
-        const genreMatch = genre ? band.genreTags.toLowerCase().includes(genre.toLowerCase()) : true;
-        return queryMatch && genreMatch;
-      }),
-    [bands, query, genre]
-  );
+  const filtered = useMemo(() => {
+    return bands.filter((band) => {
+      const searchOk = !search || band.name.toLowerCase().includes(search.toLowerCase());
+      const genreOk = !genre || band.genres.some((item) => item.toLowerCase().includes(genre.toLowerCase()));
+      return searchOk && genreOk;
+    });
+  }, [bands, search, genre]);
 
   return (
     <div className="space-y-6">
-      <SectionHeader title="Bands" subtitle="Search local artists and filter by genre tags." />
-      <SurfaceCard className="grid gap-3 p-4 md:grid-cols-2">
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search bands"
-          className="rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-white transition placeholder:text-white/40 focus:border-rose-300/55"
-        />
-        <input
-          value={genre}
-          onChange={(e) => setGenre(e.target.value)}
-          placeholder="Filter by genre"
-          className="rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-white transition placeholder:text-white/40 focus:border-rose-300/55"
-        />
-      </SurfaceCard>
+      <SectionHeader
+        eyebrow="Artists"
+        title="Bands"
+        subtitle="Search heavy acts, explore genres, and follow upcoming local favorites."
+      />
+      <div className="grid gap-3 rounded-2xl border border-zinc-800 bg-panel/90 p-4 md:grid-cols-2">
+        <FormInput label="Search bands" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <FormInput label="Filter by genre" value={genre} onChange={(e) => setGenre(e.target.value)} />
+      </div>
 
-      {isLoading && <LoadingState title="Loading bands..." />}
+      {error ? <AppState title="Bands unavailable" message={error} tone="error" /> : null}
+      {isLoading ? <LoadingGrid /> : null}
 
-      {hasError && (
-        <ErrorState
-          title="Could not load bands"
-          description="Something went wrong while fetching band profiles."
-          actionLabel="Retry"
-          onAction={loadBands}
-        />
-      )}
+      {!isLoading && !error && filtered.length === 0 ? (
+        <AppState title="No matching bands" message="Try a broader search or remove filters." />
+      ) : null}
 
-      {!isLoading && !hasError && filtered.length === 0 && (
-        <EmptyState title="No bands found" description="Try another keyword or a broader genre filter." />
-      )}
-
-      {!isLoading && !hasError && filtered.length > 0 && (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {!isLoading && !error && filtered.length > 0 ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((band) => (
             <BandCard key={band.id} band={band} />
           ))}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

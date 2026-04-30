@@ -11,7 +11,7 @@ for (const key of required) {
 }
 
 export const env = {
-  DATABASE_URL: process.env.DATABASE_URL as string,
-  JWT_SECRET: process.env.JWT_SECRET as string,
-  PORT: Number(process.env.PORT ?? 5000),
+  databaseUrl: process.env.DATABASE_URL as string,
+  jwtSecret: process.env.JWT_SECRET as string,
+  port: Number(process.env.PORT ?? 5000),
 };

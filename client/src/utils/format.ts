@@ -1,14 +1,14 @@
-export function formatDate(value: string): string {
+export const formatDateTime = (value: string): string => {
   const date = new Date(value);
   return date.toLocaleString(undefined, {
     weekday: "short",
     month: "short",
     day: "numeric",
-    hour: "2-digit",
+    hour: "numeric",
     minute: "2-digit",
   });
-}
+};
 
-export function splitTags(tags: string): string[] {
-  return tags.split(",").map((tag) => tag.trim()).filter(Boolean);
-}
+export const formatPrice = (value: number): string => {
+  return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(value);
+};

@@ -1,22 +1,33 @@
-import { AppError } from "./appError";
+export interface PaginationParams {
+  page: number;
+  limit: number;
+}
 
-const MAX_LIMIT = 100;
+export interface PaginationMeta extends PaginationParams {
+  total: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
 
-export function parsePagination(page?: string, limit?: string) {
-  const parsedPage = page ? Number(page) : 1;
-  const parsedLimit = limit ? Number(limit) : 12;
+export const buildPagination = ({ page, limit }: PaginationParams) => {
+  const skip = (page - 1) * limit;
+  return { skip, take: limit };
+};
 
-  if (!Number.isInteger(parsedPage) || !Number.isInteger(parsedLimit) || parsedPage < 1 || parsedLimit < 1) {
-    throw new AppError("Invalid pagination values", 400);
-  }
-
-  if (parsedLimit > MAX_LIMIT) {
-    throw new AppError(`Limit cannot be greater than ${MAX_LIMIT}`, 400);
-  }
+export const buildPaginationMeta = ({
+  page,
+  limit,
+  total,
+}: PaginationParams & { total: number }): PaginationMeta => {
+  const totalPages = Math.max(1, Math.ceil(total / limit));
 
   return {
-    page: parsedPage,
-    limit: parsedLimit,
-    skip: (parsedPage - 1) * parsedLimit,
+    page,
+    limit,
+    total,
+    totalPages,
+    hasNextPage: page < totalPages,
+    hasPreviousPage: page > 1,
   };
-}
+};
