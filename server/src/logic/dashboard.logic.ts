@@ -7,29 +7,32 @@ import {
 } from "../dao/dashboard.dao";
 import { CreateEventInput, UpdateEventInput } from "../types/api";
 import { AppError } from "../utils/appError";
+import { isManagerUserTypeCode, resolveUserTypeCode } from "../utils/userType";
 
 type AuthUser = {
   id: number;
   role: UserRole;
+  userTypeCode?: string;
 };
 
 function buildSlug(title: string): string {
   return `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`;
 }
 
-function assertManagerRole(role: UserRole) {
-  if (role !== UserRole.admin && role !== UserRole.band_admin && role !== UserRole.venue_admin) {
+function assertManagerRole(user: AuthUser) {
+  const userTypeCode = resolveUserTypeCode(user.role, user.userTypeCode);
+  if (!isManagerUserTypeCode(userTypeCode)) {
     throw new AppError("Forbidden", 403);
   }
 }
 
 export async function getDashboardEvents(user: AuthUser) {
-  const isAdmin = user.role === UserRole.admin;
+  const isAdmin = resolveUserTypeCode(user.role, user.userTypeCode) === "ADMIN";
   return findDashboardEvents({ createdById: isAdmin ? undefined : user.id });
 }
 
 export async function createEvent(input: CreateEventInput, user: AuthUser) {
-  assertManagerRole(user.role);
+  assertManagerRole(user);
 
   const title = input.title?.trim();
   const description = input.description?.trim();
@@ -73,7 +76,7 @@ export async function createEvent(input: CreateEventInput, user: AuthUser) {
 }
 
 export async function editEvent(idParam: string, input: UpdateEventInput, user: AuthUser) {
-  assertManagerRole(user.role);
+  assertManagerRole(user);
 
   const eventId = Number(idParam);
   if (!Number.isInteger(eventId) || eventId < 1) {
@@ -85,7 +88,7 @@ export async function editEvent(idParam: string, input: UpdateEventInput, user: 
     throw new AppError("Event not found", 404);
   }
 
-  if (user.role !== UserRole.admin && existing.createdById !== user.id) {
+  if (resolveUserTypeCode(user.role, user.userTypeCode) !== "ADMIN" && existing.createdById !== user.id) {
     throw new AppError("You can only edit events created by your account", 403);
   }
 

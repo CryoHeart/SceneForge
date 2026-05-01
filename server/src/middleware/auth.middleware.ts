@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { UserRole } from "@prisma/client";
 import { verifyToken } from "../utils/jwt";
 import { AppError } from "../utils/appError";
+import { resolveUserTypeCode } from "../utils/userType";
 
 export function authMiddleware(req: Request, _res: Response, next: NextFunction): void {
   const authHeader = req.headers.authorization;
@@ -16,6 +17,7 @@ export function authMiddleware(req: Request, _res: Response, next: NextFunction)
     req.user = {
       id: payload.userId,
       role: payload.role as UserRole,
+      userTypeCode: resolveUserTypeCode(payload.role as UserRole, payload.userTypeCode),
     };
     next();
   } catch {

@@ -1,9 +1,10 @@
 import bcrypt from "bcrypt";
 import { UserRole } from "@prisma/client";
-import { createUser, findUserByEmail } from "../dao/auth.dao";
+import { createUser, findUserByEmail, syncUserRoleAndType } from "../dao/auth.dao";
 import { LoginInput, RegisterInput } from "../types/api";
 import { AppError } from "../utils/appError";
 import { signToken } from "../utils/jwt";
+import { resolveUserTypeCode } from "../utils/userType";
 
 const allowedRoles: UserRole[] = ["fan", "band_admin", "venue_admin", "admin"];
 
@@ -38,7 +39,8 @@ export async function register(input: RegisterInput) {
     role,
   });
 
-  const token = signToken({ userId: user.id, role: user.role });
+  const userTypeCode = resolveUserTypeCode(user.role, user.userTypeCode);
+  const token = signToken({ userId: user.id, role: user.role, userTypeCode });
 
   return {
     token,
@@ -47,6 +49,7 @@ export async function register(input: RegisterInput) {
       email: user.email,
       displayName: user.displayName,
       role: user.role,
+      userTypeCode,
     },
   };
 }
@@ -69,15 +72,24 @@ export async function login(input: LoginInput) {
     throw new AppError("Invalid credentials", 401);
   }
 
-  const token = signToken({ userId: user.id, role: user.role });
+  const synced = await syncUserRoleAndType({
+    userId: user.id,
+    role: user.role,
+    userTypeCode: user.userTypeCode,
+  });
+
+  const authUser = synced ?? user;
+  const userTypeCode = resolveUserTypeCode(authUser.role, authUser.userTypeCode);
+  const token = signToken({ userId: authUser.id, role: authUser.role, userTypeCode });
 
   return {
     token,
     user: {
-      id: user.id,
-      email: user.email,
-      displayName: user.displayName,
-      role: user.role,
+      id: authUser.id,
+      email: authUser.email,
+      displayName: authUser.displayName,
+      role: authUser.role,
+      userTypeCode,
     },
   };
 }

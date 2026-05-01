@@ -1,4 +1,5 @@
 import { UserRole } from "@prisma/client";
+import { UserTypeCode } from "../../utils/userType";
 
 declare global {
   namespace Express {
@@ -6,6 +7,7 @@ declare global {
       user?: {
         id: number;
         role: UserRole;
+        userTypeCode?: UserTypeCode;
       };
     }
   }

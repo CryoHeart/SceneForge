@@ -20,14 +20,22 @@ model User {
   passwordHash  String
   displayName   String
   role          UserRole     @default(fan)
+  userTypeId    Int?
   city          String?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
+  userType      UserType?    @relation(fields: [userTypeId], references: [id])
   managedBands  Band[]       @relation("BandAdmins")
   managedVenues Venue[]      @relation("VenueAdmins")
   createdEvents Event[]      @relation("EventCreator")
   savedEvents   SavedEvent[]
   posters       Poster[]
+}
+
+model UserType {
+  id    Int    @id @default(autoincrement())
+  code  String @unique
+  users User[]
 }
 
 model Band {

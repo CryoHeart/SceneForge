@@ -40,3 +40,18 @@ export async function findBandById(id: number) {
     },
   });
 }
+
+export async function findBandByAdminId(adminId: number) {
+  return prisma.band.findFirst({ where: { adminId } });
+}
+
+export async function findAllBandsLight() {
+  return prisma.band.findMany({ orderBy: { name: "asc" } });
+}
+
+export async function updateBand(
+  id: number,
+  data: { name?: string; bio?: string; city?: string; genreTags?: string; linksJson?: Record<string, string> },
+) {
+  return prisma.band.update({ where: { id }, data });
+}

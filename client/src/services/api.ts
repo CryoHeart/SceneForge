@@ -1,6 +1,6 @@
 import axios from "axios";
 import { demoEvents } from "./mockData";
-import type { Band, Event, PaginatedResponse, Poster, Venue } from "../types";
+import type { Band, Event, PaginatedResponse, Poster, User, Venue } from "../types";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
@@ -130,6 +130,95 @@ export async function getPosters(): Promise<Poster[]> {
     logApiError("GET /posters", error);
     throw error;
   }
+}
+
+// ─── Profile (managed bands / venues) ────────────────────────────────────────
+
+export async function getManagedBands(token: string): Promise<Band[]> {
+  const { data } = await api.get<Band[]>("/bands/managed", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data;
+}
+
+export async function updateBandProfile(token: string, bandId: number, payload: Partial<Pick<Band, "name" | "bio" | "city" | "genreTags">>): Promise<Band> {
+  const { data } = await api.patch<Band>(`/bands/${bandId}/profile`, payload, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data;
+}
+
+export async function getManagedVenues(token: string): Promise<Venue[]> {
+  const { data } = await api.get<Venue[]>("/venues/managed", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data;
+}
+
+export async function updateVenueProfile(token: string, venueId: number, payload: Partial<Pick<Venue, "name" | "description" | "address" | "city" | "capacity">>): Promise<Venue> {
+  const { data } = await api.patch<Venue>(`/venues/${venueId}/profile`, payload, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data;
+}
+
+// ─── Auth ────────────────────────────────────────────────────────────────────
+
+export type AuthResponse = {
+  token: string;
+  user: User & { userTypeCode?: string | null };
+};
+
+export async function loginUser(email: string, password: string): Promise<AuthResponse> {
+  const { data } = await api.post<AuthResponse>("/auth/login", { email, password });
+  return data;
+}
+
+export async function registerUser(
+  displayName: string,
+  email: string,
+  password: string,
+): Promise<AuthResponse> {
+  const { data } = await api.post<AuthResponse>("/auth/register", { displayName, email, password });
+  return data;
+}
+
+// ─── Admin ────────────────────────────────────────────────────────────────────
+
+export type AdminUser = {
+  id: number;
+  email: string;
+  displayName: string;
+  role: string;
+  city: string | null;
+  createdAt: string;
+  userTypeCode: string | null;
+};
+
+export async function adminGetUsers(token: string): Promise<AdminUser[]> {
+  const { data } = await api.get<AdminUser[]>("/admin/users", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data;
+}
+
+export async function adminUpdateUserRole(
+  token: string,
+  userId: number,
+  role: string,
+): Promise<AdminUser> {
+  const { data } = await api.patch<AdminUser>(
+    `/admin/users/${userId}/role`,
+    { role },
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  return data;
+}
+
+export async function adminDeleteUser(token: string, userId: number): Promise<void> {
+  await api.delete(`/admin/users/${userId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
 }
 
 export { api };

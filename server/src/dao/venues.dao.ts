@@ -40,3 +40,18 @@ export async function findVenueById(id: number) {
     },
   });
 }
+
+export async function findVenueByAdminId(adminId: number) {
+  return prisma.venue.findFirst({ where: { adminId } });
+}
+
+export async function findAllVenuesLight() {
+  return prisma.venue.findMany({ orderBy: { name: "asc" } });
+}
+
+export async function updateVenue(
+  id: number,
+  data: { name?: string; description?: string; address?: string; city?: string; capacity?: number },
+) {
+  return prisma.venue.update({ where: { id }, data });
+}

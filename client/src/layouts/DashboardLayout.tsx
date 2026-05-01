@@ -1,14 +1,23 @@
 import type { PropsWithChildren } from "react";
 import { NavLink } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 
-const sections = [
+const baseSections = [
   { to: "/dashboard", label: "Overview" },
   { to: "/dashboard/events", label: "Events" },
   { to: "/dashboard/manage", label: "Manage Profiles" },
   { to: "/dashboard/upload", label: "Upload Poster" },
 ];
 
+const adminSections = [
+  { to: "/admin/users", label: "Users" },
+];
+
 export function DashboardLayout({ children }: PropsWithChildren) {
+  const auth = useAuth();
+  const isAdmin = auth.user?.role === "admin";
+  const sections = isAdmin ? [...baseSections, ...adminSections] : baseSections;
+
   return (
     <div className="grid gap-5 lg:grid-cols-[240px_1fr]">
       <aside className="rounded-2xl border border-white/10 bg-scene-800/85 p-4 shadow-panel lg:sticky lg:top-24 lg:h-fit">

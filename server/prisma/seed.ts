@@ -12,6 +12,29 @@ async function main() {
   await prisma.venue.deleteMany();
   await prisma.user.deleteMany();
 
+  await Promise.all([
+    prisma.userType.upsert({
+      where: { code: "USER" },
+      update: {},
+      create: { code: "USER" },
+    }),
+    prisma.userType.upsert({
+      where: { code: "BAND_ADMIN" },
+      update: {},
+      create: { code: "BAND_ADMIN" },
+    }),
+    prisma.userType.upsert({
+      where: { code: "VENUE_ADMIN" },
+      update: {},
+      create: { code: "VENUE_ADMIN" },
+    }),
+    prisma.userType.upsert({
+      where: { code: "ADMIN" },
+      update: {},
+      create: { code: "ADMIN" },
+    }),
+  ]);
+
   const adminPass = await bcrypt.hash("password123", 10);
   const fanPass = await bcrypt.hash("fanpass123", 10);
 
@@ -22,6 +45,7 @@ async function main() {
         passwordHash: adminPass,
         displayName: "Scene Admin",
         role: UserRole.admin,
+        userType: { connect: { code: "ADMIN" } },
         city: "Istanbul",
       },
     }),
@@ -31,6 +55,7 @@ async function main() {
         passwordHash: fanPass,
         displayName: "Riff Hunter",
         role: UserRole.fan,
+        userType: { connect: { code: "USER" } },
         city: "Istanbul",
       },
     }),

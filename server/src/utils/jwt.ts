@@ -2,10 +2,12 @@ import jwt from "jsonwebtoken";
 import { UserRole } from "@prisma/client";
 import { env } from "../config/env";
 import { AppError } from "./appError";
+import { UserTypeCode } from "./userType";
 
 export type JwtPayload = {
   userId: number;
   role: UserRole;
+  userTypeCode?: UserTypeCode;
 };
 
 export function signToken(payload: JwtPayload): string {

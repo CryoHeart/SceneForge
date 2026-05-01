@@ -1,6 +1,7 @@
 import { UserRole } from "@prisma/client";
 import { NextFunction, Request, Response } from "express";
 import { AppError } from "../utils/appError";
+import { hasRole } from "../utils/userType";
 
 export function roleMiddleware(roles: UserRole[]) {
   return (req: Request, _res: Response, next: NextFunction): void => {
@@ -9,7 +10,7 @@ export function roleMiddleware(roles: UserRole[]) {
       return;
     }
 
-    if (!roles.includes(req.user.role)) {
+    if (!hasRole(roles, req.user)) {
       next(new AppError("Forbidden", 403));
       return;
     }

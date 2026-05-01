@@ -1,5 +1,6 @@
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { MainLayout } from "./layouts/MainLayout";
+import { AdminUsersPage } from "./pages/AdminUsersPage";
 import { BandProfilePage } from "./pages/BandProfilePage";
 import { BandsPage } from "./pages/BandsPage";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="/dashboard/events" element={<DashboardPage />} />
         <Route path="/dashboard/manage" element={<DashboardPage />} />
         <Route path="/dashboard/upload" element={<DashboardPage />} />
+        <Route path="/admin/users" element={<AdminUsersPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/home" element={<Navigate to="/" replace />} />

@@ -1,21 +1,40 @@
 import { useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 
-const links = [
+const publicLinks = [
   { to: "/", label: "Home" },
   { to: "/events", label: "Events" },
   { to: "/bands", label: "Bands" },
   { to: "/venues", label: "Venues" },
   { to: "/posters", label: "Poster Wall" },
-  { to: "/dashboard", label: "Dashboard" },
 ];
+
+const roleLabel: Record<string, string> = {
+  fan: "Fan",
+  band_admin: "Band Admin",
+  venue_admin: "Venue Admin",
+  admin: "Admin",
+};
 
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const auth = useAuth();
+  const navigate = useNavigate();
 
   function closeMenu() {
     setIsMenuOpen(false);
   }
+
+  function handleLogout() {
+    auth.logout();
+    closeMenu();
+    navigate("/");
+  }
+
+  const navLinks = auth.isAuthenticated
+    ? [...publicLinks, { to: "/dashboard", label: "Dashboard" }]
+    : publicLinks;
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/10 bg-black/55 backdrop-blur-xl">
@@ -24,7 +43,7 @@ export function Navbar() {
           Scene<span className="text-scene-accent">Forge</span>
         </Link>
         <nav className="hidden items-center gap-6 md:flex">
-          {links.map((link) => (
+          {navLinks.map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
@@ -41,14 +60,32 @@ export function Navbar() {
             </NavLink>
           ))}
         </nav>
-        <div className="hidden items-center gap-2 md:flex">
-          <Link to="/login" className="rounded-lg border border-white/15 px-3 py-1.5 text-sm text-white/80 hover:bg-white/5">
-            Login
-          </Link>
-          <Link to="/register" className="rounded-lg bg-scene-accent px-3 py-1.5 text-sm text-white hover:bg-rose-500">
-            Join
-          </Link>
-        </div>
+
+        {auth.isAuthenticated && auth.user ? (
+          <div className="hidden items-center gap-3 md:flex">
+            <div className="text-right">
+              <p className="text-sm font-medium text-white leading-tight">{auth.user.displayName}</p>
+              <p className="text-xs text-white/50 leading-tight">{roleLabel[auth.user.role] ?? auth.user.role}</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="rounded-lg border border-white/15 px-3 py-1.5 text-sm text-white/80 hover:bg-white/5"
+            >
+              Logout
+            </button>
+          </div>
+        ) : (
+          <div className="hidden items-center gap-2 md:flex">
+            <Link to="/login" className="rounded-lg border border-white/15 px-3 py-1.5 text-sm text-white/80 hover:bg-white/5">
+              Login
+            </Link>
+            <Link to="/register" className="rounded-lg bg-scene-accent px-3 py-1.5 text-sm text-white hover:bg-rose-500">
+              Join
+            </Link>
+          </div>
+        )}
+
         <button
           type="button"
           className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/15 text-white md:hidden"
@@ -58,10 +95,17 @@ export function Navbar() {
           <span className="text-lg">{isMenuOpen ? "x" : "="}</span>
         </button>
       </div>
+
       {isMenuOpen && (
         <div className="border-t border-white/10 bg-black/85 px-4 py-4 md:hidden">
+          {auth.isAuthenticated && auth.user && (
+            <div className="mb-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+              <p className="text-sm font-medium text-white">{auth.user.displayName}</p>
+              <p className="text-xs text-white/50">{roleLabel[auth.user.role] ?? auth.user.role}</p>
+            </div>
+          )}
           <nav className="space-y-1">
-            {links.map((link) => (
+            {navLinks.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
@@ -78,20 +122,32 @@ export function Navbar() {
             ))}
           </nav>
           <div className="mt-4 grid grid-cols-2 gap-2">
-            <Link
-              to="/login"
-              onClick={closeMenu}
-              className="rounded-lg border border-white/15 px-3 py-2 text-center text-sm text-white/85"
-            >
-              Login
-            </Link>
-            <Link
-              to="/register"
-              onClick={closeMenu}
-              className="rounded-lg bg-scene-accent px-3 py-2 text-center text-sm text-white"
-            >
-              Join
-            </Link>
+            {auth.isAuthenticated ? (
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="col-span-2 rounded-lg border border-white/15 px-3 py-2 text-center text-sm text-white/85"
+              >
+                Logout
+              </button>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  onClick={closeMenu}
+                  className="rounded-lg border border-white/15 px-3 py-2 text-center text-sm text-white/85"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/register"
+                  onClick={closeMenu}
+                  className="rounded-lg bg-scene-accent px-3 py-2 text-center text-sm text-white"
+                >
+                  Join
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

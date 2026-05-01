@@ -1,6 +1,7 @@
 import cors from "cors";
 import express from "express";
 import path from "path";
+import { adminRouter } from "./routes/admin.routes";
 import { authRouter } from "./routes/auth.routes";
 import { bandsRouter } from "./routes/bands.routes";
 import { dashboardRouter } from "./routes/dashboard.routes";
@@ -31,6 +32,7 @@ app.use("/api/venues", venuesRouter);
 app.use("/api/posters", postersRouter);
 app.use("/api/dashboard", dashboardRouter);
 app.use("/api/saved-events", savedEventsRouter);
+app.use("/api/admin", adminRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
