@@ -4,13 +4,35 @@ SceneForge is a full-stack web MVP for discovering local underground metal and r
 
 ## Tech Stack
 
-- Frontend: React + TypeScript + Vite
-- Styling: Tailwind CSS
-- Backend: Node.js + Express + TypeScript
-- Database: MySQL + Prisma ORM
-- Auth: JWT (bcrypt password hashing)
-- API style: REST
-- Uploads: Cloudinary-ready structure with mock upload flow
+### Client
+
+| Tool | Purpose |
+|---|---|
+| **React 18** | UI component model and rendering engine |
+| **TypeScript** | Static typing across all components, hooks, and service calls |
+| **Vite** | Fast development server with HMR and optimized production bundling |
+| **React Router DOM v6** | Client-side routing and nested layout support |
+| **Tailwind CSS** | Utility-first CSS framework for all styling and responsive design |
+| **PostCSS + Autoprefixer** | CSS transformation pipeline required by Tailwind |
+| **Axios** | HTTP client for all REST API calls to the backend |
+| **clsx** | Conditional className composition utility used across components |
+| **react-datepicker** | Date picker UI component used in event creation and filtering forms |
+| **shared (local package)** | Shared TypeScript types and utilities consumed by both client and server |
+
+### Server
+
+| Tool | Purpose |
+|---|---|
+| **Node.js** | JavaScript runtime for the backend |
+| **Express 5** | HTTP server framework handling routing, middleware, and request/response lifecycle |
+| **TypeScript** | Static typing across controllers, logic, DAOs, and middleware |
+| **Prisma ORM** | Type-safe database access layer and schema management for MySQL |
+| **MySQL** | Relational database storing all application data |
+| **bcrypt** | Password hashing for secure credential storage on register/login |
+| **jsonwebtoken (JWT)** | Token-based authentication — issued on login, verified on protected routes |
+| **cors** | Cross-Origin Resource Sharing middleware allowing the Vite client to reach the API |
+| **dotenv** | Loads environment variables from `.env` into `process.env` |
+| **tsx** | TypeScript execution for development (`tsx watch`) without a compile step |
 
 ## Monorepo Structure
 
